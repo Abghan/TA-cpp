@@ -15,10 +15,10 @@ target_link_libraries(output
 )
 
 
-option(BUILD_EXAMPLES "" ON)
+# option(BUILD_EXAMPLES "" ON)
 
-if (BUILD_EXAMPLES)
-    message(STATUS "Building examples...")
-    add_subdirectory(example)
+# if (BUILD_EXAMPLES)
+#     message(STATUS "Building examples...")
+#     add_subdirectory(example)
 
-endif()
+# endif()
