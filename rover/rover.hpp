@@ -6,43 +6,24 @@
 class Rover {
 private:
     std::vector<float> robotState;
+    std::vector<float> sp{0, 0, 0, 0};
+    std::vector<float> gp{0, 0, 0, 0};
+    std::vector<float> obstacle;
     bool readyMove;
-    // int step;
-    // std::vector<std::vector<float>> stateHistory;
 
-    std::vector<float> sp;
-    std::vector<float> gp;
-    std::vector<float> gcp;
-    std::vector<float> v;
-
-    //make JSON from string
-    Json::CharReaderBuilder builder;
-    Json::Value dataRover;
-    Json::String errs;
-
-    // obstacle
-    std::vector<float> obstacle {40.0, 20.0, 0.0, 0.0};
+    // //make JSON from string
+    // Json::CharReaderBuilder builder;
+    // Json::Value dataRover;
+    // Json::String errs;
 
 public:
-    Rover(const std::string& inputDataRover); 
+    Rover(std::vector<float> &roverState, std::vector<float> &obstacle); 
 
     void updateState(std::vector<float> robotState);
 
-    std::vector<float> getState();
-
-    void setReadyMove(bool input);
-
-    bool getReadyMove();
-
     void setTask(std::string &inputTask); 
 
-    std::vector<float> getTask();
-
     void setObstacle(const std::string& inputDataRover);
-
-    // void updateStateHistory(std::vector<float> input);
-
-    // std::vector<std::vector<float>> getStateHistory();
 
     std::string getJSONString();
     

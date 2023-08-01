@@ -18,7 +18,7 @@
 // std::condition_variable cv;
 bool publishing = true;
 
-const std::string SERVER_ADDRESS	{ "tcp://localhost:1883" };
+const std::string SERVER_ADDRESS	{ "localhost:1883" };
 const std::string CLIENT_ID		    { "Rover1" };
 
 void mqttInit(mqtt::client &cli);
@@ -31,24 +31,17 @@ int main(int argc, char const *argv[])
     mqttInit(cli);
 
     // Init Rover1
-    std::string inputRover1 = R"({
-    "sp": [null, null, null, null],
-    "gp": [null, null, null, null],
-    "gcp": [40, 150, 0],
-    "v": [0, 0, 0],
-    })";
-    Rover rover1 = Rover(inputRover1);
-
-    // // Init Rover2
-    // std::string inputRover2 = R"({
+    // std::string inputRover1 = R"({
     // "sp": [null, null, null, null],
     // "gp": [null, null, null, null],
-    // "gcp": [40, 20, 0],
+    // "gcp": [40, 150, 0],
     // "v": [0, 0, 0],
     // })";
-    // Rover rover2 = Rover(inputRover2);
+    std::vector<float> robotState{40, 150, 0, 0};
+    std::vector<float> obstacle{40, 20, 0, 0};
 
-    // std::string msgJSON = rover1.getJSONString(); 
+    Rover rover1 = Rover(robotState, obstacle);
+
     std::thread t1(pubMsg,std::ref(cli), std::ref(rover1));
     std::thread t2(subMsg,std::ref(cli), std::ref(rover1));
 
@@ -96,14 +89,15 @@ void mqttInit(mqtt::client &cli){
 
 void pubMsg(mqtt::client &cli, Rover &rover1){
     while (true){
-        if(publishing){
-            // std::cout << "\nSending message..." << std::endl;
-            auto pubmsg = mqtt::make_message("Map/Rover1/State", rover1.getJSONString());
+        if(true){
+            std::string msg = rover1.getJSONString();
+            auto pubmsg = mqtt::make_message("Map/Rover1/State", msg);
             pubmsg->set_qos(0);
             cli.publish(pubmsg);
             // std::cout << publishing << std::endl;
             // std::this_thread::sleep_for(std::chrono::seconds(2));
-            std::this_thread::sleep_for(std::chrono::milliseconds(50));
+            // std::cout << "\nSending message..." << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
 
         }
     }
@@ -115,14 +109,14 @@ void subMsg(mqtt::client &cli, Rover &rover1){
         auto msg = cli.consume_message();
         if (msg) {
             // std::cout << msg->get_topic() << ": " << msg->to_string() << std::endl;
-            if (msg->get_topic() == "Map/Simulasi/Publish" && msg->to_string() == "true") {
-                std::cout << "Start Publish...." << std::endl;
-                publishing = true;
-            }
-            if (msg->get_topic() == "Map/Simulasi/Publish" && msg->to_string() == "false") {
-                std::cout << "End Publish...." << std::endl;
-                publishing = false;
-            }
+            // if (msg->get_topic() == "Map/Simulasi/Publish" && msg->to_string() == "true") {
+            //     std::cout << "Start Publish...." << std::endl;
+            //     publishing = true;
+            // }
+            // if (msg->get_topic() == "Map/Simulasi/Publish" && msg->to_string() == "false") {
+            //     std::cout << "End Publish...." << std::endl;
+            //     publishing = false;
+            // }
             if (msg->get_topic() == "Map/Simulasi/Command" && msg->to_string() == "display") {
                 rover1.display();
             }
@@ -135,17 +129,13 @@ void subMsg(mqtt::client &cli, Rover &rover1){
                 rover1.setTask(msgString); 
                 // std::cout << msg->get_topic() << ": " << msg->to_string() << std::endl;
             }
-            // if (msg->get_topic() == "Map/Rover2/Task"){
-            //     std::string msgString = msg->to_string();
-            //     rover2.setTask(msgString); 
-            //     // std::cout << msg->get_topic() << ": " << msg->to_string() << std::endl;
-            // }
             if (msg->get_topic() == "Map/Rover2/State"){
                 std::string msgString = msg->to_string();
                 rover1.setObstacle(msgString); 
-                rover1.velocity_obstacle();
                 // std::cout << msg->get_topic() << ": " << msg->to_string() << std::endl;
             }
+            rover1.velocity_obstacle();
+
         }
         else if (!cli.is_connected()) {
             std::cout << "Lost connection" << std::endl;
@@ -155,6 +145,6 @@ void subMsg(mqtt::client &cli, Rover &rover1){
             std::cout << "Re-established connection" << std::endl;
         }
         // std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }

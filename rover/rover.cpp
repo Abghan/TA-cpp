@@ -7,79 +7,16 @@ const float TIMESTEP = 0.1;
 const float ROBOT_RADIUS = 10.7;
 const int VMAX = 8; 
 
-Rover::Rover(const std::string& inputDataRover) {
-
-    std::istringstream jsonStream(inputDataRover);
-    bool parsingSuccessful = Json::parseFromStream(builder, jsonStream, &dataRover, &errs);
-    if (!parsingSuccessful) {
-        std::cout << "Failed to parse JSON Rover: " << errs << std::endl;
-    }
-
-    else{
-    const Json::Value& spArray = dataRover["sp"];
-    for (int i = 0; i < spArray.size(); ++i) {
-        // robotState.push_back(spArray[i].asFloat());
-        sp.push_back(spArray[i].asFloat());
-    }
-
-    const Json::Value& gpArray = dataRover["gp"];
-    for (int i = 0; i < gpArray.size(); ++i) {
-        gp.push_back(gpArray[i].asFloat());
-    }
-
-    const Json::Value& gcpArray = dataRover["gcp"];
-    for (int i = 0; i < gcpArray.size(); ++i) {
-        gcp.push_back(gcpArray[i].asFloat());
-    }
-
-    const Json::Value& vArray = dataRover["v"];
-    for (int i = 0; i < vArray.size(); ++i) {
-        v.push_back(vArray[i].asFloat());
-    }
-    }
-
-    //Robot State
-    robotState.push_back(gcp[0]);
-    robotState.push_back(gcp[1]);
-    robotState.push_back(v[0]);
-    robotState.push_back(v[1]);
-
+Rover::Rover(std::vector<float> &robotState, std::vector<float> &obstacle){
+    this->robotState = robotState;
+    this->obstacle = obstacle;
     readyMove = false;
-
 }
 
 
 void Rover::updateState(std::vector<float> robotState) {
-    std::cout << "Updating Rover State..." << std::endl;
+    // std::cout << "Updating Rover State..." << std::endl;
     this->robotState = robotState;
-    gcp[0] = robotState[0];
-    gcp[1] = robotState[1];
-    v[0] = robotState[2];
-    v[1] = robotState[3];
-    // update JSON
-    dataRover["gcp"][0] = robotState[0];
-    dataRover["gcp"][1] = robotState[1];
-    dataRover["v"][0] = robotState[2];
-    dataRover["v"][1] = robotState[3];
-}
-
-
-std::vector<float> Rover::getState() {
-    // std::cout << " Robot State  = ";
-    // printVector(robotState);
-    return robotState;
-}
-
-
-void Rover::setReadyMove(bool input) {
-    std::cout << "Set Ready Move" << std::endl;
-    readyMove = input;
-}
-
-
-bool Rover::getReadyMove() {
-    // std::cout << " readyMove = " << readyMove << std::endl;
-    return readyMove;
 }
 
 
@@ -88,10 +25,9 @@ void Rover::setTask(std::string &inputTask) {
     Json::Value task;
     Json::String errsTask;
     std::istringstream jsonStream(inputTask);
-    bool parsingSuccessful = Json::parseFromStream(builder, jsonStream, &task, &errsTask);
+    bool parsingSuccessful = Json::parseFromStream(builderTask, jsonStream, &task, &errsTask);
     if (!parsingSuccessful) {
-        std::cout << "Failed to parse JSON task: " << errs << std::endl;
-
+        std::cout << "Failed to parse JSON task: " << errsTask << std::endl;
     }
     else{
         std::cout << "Setting Rover Task..." << std::endl;
@@ -99,26 +35,18 @@ void Rover::setTask(std::string &inputTask) {
         for (int i = 0; i < spArray.size(); ++i) {
             // Update values of vector sp and JSON data Rover
             sp[i] = spArray[i].asFloat();
-            dataRover["sp"][i] = spArray[i].asFloat();
             // std::cout<<spArray[i]<<std::endl;
         }
         const Json::Value& gpArray = task["gp"];
         for (int i = 0; i < gpArray.size(); ++i) {
             // Update values of vector gp and JSON data Rover
             gp[i] = gpArray[i].asFloat();
-            dataRover["gp"][i] = gpArray[i].asFloat();
             // std::cout<<gpArray[i]<<std::endl;
         }
-        setReadyMove(true);
+        readyMove = true;
     }
 }
 
-
-std::vector<float> Rover::getTask() {
-    // std::cout << " gp = ";
-    // printVector(gp);
-    return gp;
-}
 
 void Rover::setObstacle(const std::string& inputObstacle) {
     Json::CharReaderBuilder builderObstacle;
@@ -127,19 +55,14 @@ void Rover::setObstacle(const std::string& inputObstacle) {
     std::istringstream jsonStream(inputObstacle);
     bool parsingSuccessful = Json::parseFromStream(builderObstacle, jsonStream, &dataObstacle, &errsObstacle);
     if (!parsingSuccessful) {
-        std::cout << "Failed to parse JSON obstacle: " << errs << std::endl;
+        std::cout << "Failed to parse JSON obstacle: " << errsObstacle << std::endl;
     }
 
     else{
-    const Json::Value& gcpArray = dataObstacle["gcp"];
-    for (int i = 0; i < gcpArray.size()-1; ++i) {
-        obstacle[i] = gcpArray[i].asFloat();
-    }
-
-    const Json::Value& vArray = dataObstacle["v"];
-    for (int i = 0; i < vArray.size()-1; ++i) {
-        obstacle[1+i] = vArray[i].asFloat();
-    }
+        const Json::Value& robotStateArray = dataObstacle["robot_state"];
+        for (int i = 0; i < robotStateArray.size()-1; ++i) {
+            obstacle[i] = robotStateArray[i].asFloat();
+        }
     }
 }
 
@@ -148,22 +71,20 @@ void Rover::setObstacle(const std::string& inputObstacle) {
 //     return dataRover;
 // }
 
-// void Rover::updateStateHistory(std::vector<float> input) {
-//     for (int i = 0; i < 4; ++i) {
-//         stateHistory[i][step] = input[i];
-//     }
-//     step++;
-// }
-
-// std::vector<std::vector<float>> Rover::getStateHistory() {
-//     return stateHistory;
-// }
-
 std::string Rover::getJSONString() {
+    // Create a JSON object
+    Json::Value jsonObj;
+    // Array 
+    Json::Value robot_state;
+    robot_state.append(robotState[0]);
+    robot_state.append(robotState[1]);
+    robot_state.append(robotState[2]);
+    robot_state.append(robotState[3]);
+    jsonObj["robot_state"] = robot_state;
     // Serialize the JSON object to a string
     Json::StreamWriterBuilder writer;
     writer["indentation"] = "\t";
-    std::string jsonString = Json::writeString(writer, dataRover);
+    std::string jsonString = Json::writeString(writer, jsonObj);
     // std::cout << " JSON String = " << jsonString << std::endl;
     return jsonString;
 }
@@ -186,14 +107,10 @@ void Rover::display(){
     printVector(sp);
     std::cout << " Goal Point   = ";
     printVector(gp);
-    std::cout << " gcp          = ";
-    printVector(gcp);
-    std::cout << " v            = ";
-    printVector(v);
     std::cout << " obstacle     = ";
     printVector(obstacle);
-    std::cout << " Data Rover   = " << dataRover << std::endl;
-    std::cout << std::endl;
+    // std::cout << " Data Rover   = " << dataRover << std::endl;
+    // std::cout << std::endl;
 }
 
 
@@ -488,6 +405,8 @@ std::vector<float> Rover::update_state(const std::vector<float>& xy, const std::
     new_state[1] = xy[1] + v[1] * TIMESTEP;
     new_state[2] = v[0];
     new_state[3] = v[1];
+
+    updateState(new_state);
     return new_state;
 }
 
@@ -506,6 +425,7 @@ void Rover::velocity_obstacle(){
         if(robotState[2]==0 && robotState[3]==0){
             // std::cout << "Goal coordinate " << robotState << ", " << task[1] << std::endl;
             std::cout << "Rover arrived at the goal" << std::endl;
+            readyMove=0;
         }
     }
 }
