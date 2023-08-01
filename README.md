@@ -19,3 +19,6 @@ Requirements
     $ sudo cmake --build build/ --target install
     $ sudo ldconfig
 3. Install jsoncpp
+    with ubuntu:
+    $ sudo apt-get install libjsoncpp-dev 
+    $ sudo ln -s /usr/include/jsoncpp/json/ /usr/include/json
