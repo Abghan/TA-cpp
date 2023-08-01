@@ -6,7 +6,7 @@ find_package(jsoncpp REQUIRED)
 
 add_subdirectory(rover)
 
-add_executable(output main.cpp)
+add_executable(output test1.cpp)
 target_link_libraries(output
     rover  
     jsoncpp
@@ -14,11 +14,3 @@ target_link_libraries(output
     paho-mqttpp3
 )
 
-
-option(BUILD_EXAMPLES "" ON)
-
-if (BUILD_EXAMPLES)
-    message(STATUS "Building examples...")
-    add_subdirectory(example)
-
-endif()
