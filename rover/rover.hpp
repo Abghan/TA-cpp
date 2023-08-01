@@ -20,6 +20,9 @@ private:
     Json::Value dataRover;
     Json::String errs;
 
+    // obstacle
+    std::vector<float> obstacle {40.0, 20.0, 0.0, 0.0};
+
 public:
     Rover(const std::string& inputDataRover); 
 
@@ -34,6 +37,8 @@ public:
     void setTask(std::string &inputTask); 
 
     std::vector<float> getTask();
+
+    void setObstacle(const std::string& inputDataRover);
 
     // void updateStateHistory(std::vector<float> input);
 
@@ -88,6 +93,6 @@ public:
  
     std::vector<float> update_state(const std::vector<float>& x, const std::vector<float>& v);
 
-    void velocity_obstacle(std::vector<float>& obstacles);
+    void velocity_obstacle();
 
 };

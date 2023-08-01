@@ -12,13 +12,13 @@ Rover::Rover(const std::string& inputDataRover) {
     std::istringstream jsonStream(inputDataRover);
     bool parsingSuccessful = Json::parseFromStream(builder, jsonStream, &dataRover, &errs);
     if (!parsingSuccessful) {
-        std::cout << "Failed to parse JSON: " << errs << std::endl;
+        std::cout << "Failed to parse JSON Rover: " << errs << std::endl;
     }
 
     else{
     const Json::Value& spArray = dataRover["sp"];
     for (int i = 0; i < spArray.size(); ++i) {
-        robotState.push_back(spArray[i].asFloat());
+        // robotState.push_back(spArray[i].asFloat());
         sp.push_back(spArray[i].asFloat());
     }
 
@@ -37,6 +37,12 @@ Rover::Rover(const std::string& inputDataRover) {
         v.push_back(vArray[i].asFloat());
     }
     }
+
+    //Robot State
+    robotState.push_back(gcp[0]);
+    robotState.push_back(gcp[1]);
+    robotState.push_back(v[0]);
+    robotState.push_back(v[1]);
 
     readyMove = false;
 
@@ -84,7 +90,7 @@ void Rover::setTask(std::string &inputTask) {
     std::istringstream jsonStream(inputTask);
     bool parsingSuccessful = Json::parseFromStream(builder, jsonStream, &task, &errsTask);
     if (!parsingSuccessful) {
-        std::cout << "Failed to parse JSON: " << errs << std::endl;
+        std::cout << "Failed to parse JSON task: " << errs << std::endl;
 
     }
     else{
@@ -112,6 +118,29 @@ std::vector<float> Rover::getTask() {
     // std::cout << " gp = ";
     // printVector(gp);
     return gp;
+}
+
+void Rover::setObstacle(const std::string& inputObstacle) {
+    Json::CharReaderBuilder builderObstacle;
+    Json::Value dataObstacle;
+    Json::String errsObstacle;
+    std::istringstream jsonStream(inputObstacle);
+    bool parsingSuccessful = Json::parseFromStream(builderObstacle, jsonStream, &dataObstacle, &errsObstacle);
+    if (!parsingSuccessful) {
+        std::cout << "Failed to parse JSON obstacle: " << errs << std::endl;
+    }
+
+    else{
+    const Json::Value& gcpArray = dataObstacle["gcp"];
+    for (int i = 0; i < gcpArray.size()-1; ++i) {
+        obstacle[i] = gcpArray[i].asFloat();
+    }
+
+    const Json::Value& vArray = dataObstacle["v"];
+    for (int i = 0; i < vArray.size()-1; ++i) {
+        obstacle[1+i] = vArray[i].asFloat();
+    }
+    }
 }
 
 
@@ -161,6 +190,8 @@ void Rover::display(){
     printVector(gcp);
     std::cout << " v            = ";
     printVector(v);
+    std::cout << " obstacle     = ";
+    printVector(obstacle);
     std::cout << " Data Rover   = " << dataRover << std::endl;
     std::cout << std::endl;
 }
@@ -450,23 +481,31 @@ std::vector<float> Rover::compute_velocity(const std::vector<float>& robot, cons
     return cmd_vel;
 }
 
-std::vector<float> Rover::update_state(const std::vector<float>& x, const std::vector<float>& v) {
+std::vector<float> Rover::update_state(const std::vector<float>& xy, const std::vector<float>& v) {
     // This state contains (x, y, vx, vy)
     std::vector<float> new_state(4);
-    new_state[0] = x[0] + v[0] * TIMESTEP;
-    new_state[1] = x[1] + v[1] * TIMESTEP;
+    new_state[0] = xy[0] + v[0] * TIMESTEP;
+    new_state[1] = xy[1] + v[1] * TIMESTEP;
     new_state[2] = v[0];
     new_state[3] = v[1];
     return new_state;
 }
 
 
-void Rover::velocity_obstacle(std::vector<float>& obstacles){
-    std::vector<float> v_desired = desired_velocity(robotState, gp);
+void Rover::velocity_obstacle(){
+    if(readyMove){
+        std::vector<float> v_desired = desired_velocity(robotState, gp);
 
-    // Compute control velocity
-    std::vector<float> control_vel = compute_velocity(robotState, obstacles, v_desired);
+        // Compute control velocity
+        std::vector<float> control_vel = compute_velocity(robotState, obstacle, v_desired);
 
-    // Update robot state
-    robotState = update_state(robotState, control_vel);
+        // Update robot state
+        robotState = update_state(robotState, control_vel);
+        std::cout << "Robot State  = ";
+        printVector(robotState);
+        if(robotState[2]==0 && robotState[3]==0){
+            // std::cout << "Goal coordinate " << robotState << ", " << task[1] << std::endl;
+            std::cout << "Rover arrived at the goal" << std::endl;
+        }
+    }
 }
