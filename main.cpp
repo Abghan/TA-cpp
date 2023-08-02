@@ -2,17 +2,12 @@
 #include <chrono>
 #include <string>
 #include <thread>
-// #include <mutex>
-// #include <condition_variable>
 #include <vector>
 #include "mqtt/async_client.h"
 #include "mqtt/client.h"
 #include "json/json.h"
 #include "rover/rover.hpp"
 
-// std::mutex mtx;
-// std::condition_variable cv;
-// bool publishing = true;
 
 const std::string SERVER_ADDRESS	{ "localhost:1883" };
 const std::string CLIENT_ID		    { "Rover2" };
@@ -71,8 +66,6 @@ int main(int argc, char const *argv[])
 
 void mqttInit(mqtt::client &cli){
     auto connOpts = mqtt::connect_options_builder()
-    // .user_name("user")
-    // .password("passwd")
     .keep_alive_interval(std::chrono::seconds(30))
     .automatic_reconnect(std::chrono::seconds(2), std::chrono::seconds(30))
     .clean_session(true)
@@ -82,7 +75,6 @@ void mqttInit(mqtt::client &cli){
     mqtt::connect_response rsp = cli.connect(connOpts);
     std::cout << "OK\n" << std::endl;
 
-    // const std::vector<std::string> TOPICS { "Map/Rover1/Task", "Map/Rover2/State", "Map/Simulasi/#" };
     const std::vector<std::string> TOPICS { "Map/Rover1/State", "Map/Rover2/#", "Map/Simulasi/#"};
     const std::vector<int> QOS {0, 0, 0};
 
@@ -106,10 +98,10 @@ void subMsg(mqtt::client &cli, Rover &rover2){
     while (true) {
         auto msg = cli.consume_message();
         if (msg) {
+            // std::cout << msg->get_topic() << ": " << msg->to_string() << std::endl;
             if (msg->get_topic() == "Map/Rover2/Task"){
                 std::string msgString = msg->to_string();
                 rover2.setTask(msgString); 
-                // std::cout << msg->get_topic() << ": " << msg->to_string() << std::endl;
             }
             if (msg->get_topic() == "Map/Simulasi/Command" && msg->to_string() == "display") {
                 rover2.display();
@@ -117,9 +109,7 @@ void subMsg(mqtt::client &cli, Rover &rover2){
             if (msg->get_topic() == "Map/Rover1/State"){
                 std::string msgString = msg->to_string();
                 rover2.setObstacle(msgString); 
-                // std::cout << msg->get_topic() << ": " << msg->to_string() << std::endl;
             }
-            // rover2.velocity_obstacle();
             bool readyMove = rover2.getReady();
             if(readyMove){
                 std::vector<float> robotState = rover2.getState();
@@ -135,7 +125,6 @@ void subMsg(mqtt::client &cli, Rover &rover2){
                 std::cout << "Robot State  = ";
                 rover2.printVector(robotState);
                 if(robotState[2]==0 && robotState[3]==0){
-                    // std::cout << "Goal coordinate " << robotState << ", " << task[1] << std::endl;
                     std::cout << "Rover arrived at the goal" << std::endl;
                     readyMove=0;
                 }
@@ -216,9 +205,7 @@ std::vector<float> translate_line(std::vector<float> line, std::vector<float> tr
 
 // create Constrain -> return A[0], A[1], b[0] 
 std::vector<float> create_constraints(const std::vector<float> &translation, float angle) {
-// std::vector<float> create_constraints(const std::vector<float>& translation, float angle, const char* side) {
-
-    // Membuat line
+    // Create line
     std::vector<float> origin = {0.0, 0.0, 1.0};
     std::vector<float> point = {std::cos(angle), std::sin(angle)};
     std::vector<float> line = {(origin[1] * point[2]) - (origin[2] * point[1]),
@@ -368,23 +355,3 @@ std::vector<float> update_state(const std::vector<float> &xy, const std::vector<
     // updateState(new_state);
     return new_state;
 }
-
-
-// void velocity_obstacle(){
-//     if(readyMove){
-//         std::vector<float> v_desired = desired_velocity(robotState, gp);
-
-//         // Compute control velocity
-//         std::vector<float> control_vel = compute_velocity(robotState, obstacle, v_desired);
-
-//         // Update robot state
-//         robotState = update_state(robotState, control_vel);
-//         std::cout << "Robot State  = ";
-//         printVector(robotState);
-//         if(robotState[2]==0 && robotState[3]==0){
-//             // std::cout << "Goal coordinate " << robotState << ", " << task[1] << std::endl;
-//             std::cout << "Rover arrived at the goal" << std::endl;
-//             readyMove=0;
-//         }
-//     }
-// }
