@@ -351,8 +351,4 @@ std::vector<float> update_state(const std::vector<float> &xy, const std::vector<
     new_state[2] = v[0];
     new_state[3] = v[1];
     return new_state;
-<<<<<<< HEAD
 }
-=======
-}
->>>>>>> 3c82159 (fixed some bug)
