@@ -6,7 +6,7 @@
 class Rover {
 private:
     std::vector<float> robotState;
-    std::vector<float> sp{0.0, 0.0, 0.0, 0.0};
+    // std::vector<float> sp{0.0, 0.0, 0.0, 0.0};
     std::vector<float> gp{0.0, 0.0, 0.0, 0.0};
     std::vector<float> obstacle;
     bool readyMove;

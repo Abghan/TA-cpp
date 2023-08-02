@@ -11,7 +11,7 @@
 
 const std::string SERVER_ADDRESS	{ "localhost:1883" };
 const std::string CLIENT_ID		    { "Rover2" };
-const float TIMESTEP = 0.1;
+const float TIMESTEP = 0.5;
 const float ROBOT_RADIUS = 11;
 const int VMAX = 8; 
 
@@ -65,11 +65,15 @@ int main(int argc, char const *argv[])
 
 
 void mqttInit(mqtt::client &cli){
-    auto connOpts = mqtt::connect_options_builder()
-    .keep_alive_interval(std::chrono::seconds(30))
-    .automatic_reconnect(std::chrono::seconds(2), std::chrono::seconds(30))
-    .clean_session(true)
-    .finalize();
+    // auto connOpts = mqtt::connect_options_builder()
+    // .keep_alive_interval(std::chrono::seconds(30))
+    // .automatic_reconnect(std::chrono::seconds(2), std::chrono::seconds(30))
+    // .clean_session(true)
+    // .finalize();
+
+    mqtt::connect_options connOpts;
+	connOpts.set_keep_alive_interval(20);
+	connOpts.set_clean_session(false);
 
     std::cout << "Connecting to the MQTT server..." << std::flush;
     mqtt::connect_response rsp = cli.connect(connOpts);
@@ -90,7 +94,7 @@ void pubMsg(mqtt::client &cli, Rover &rover2){
         auto pubmsg = mqtt::make_message("Map/Rover2/State", msg);
         pubmsg->set_qos(0);
         cli.publish(pubmsg);
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 }
 
@@ -109,26 +113,28 @@ void subMsg(mqtt::client &cli, Rover &rover2){
             if (msg->get_topic() == "Map/Rover1/State"){
                 std::string msgString = msg->to_string();
                 rover2.setObstacle(msgString); 
+                // Veelocity Obstacle
+                bool readyMove = rover2.getReady();
+                if(readyMove){
+                    std::vector<float> robotState = rover2.getState();
+                    std::vector<float> gp = rover2.getTask();
+                    std::vector<float> v_desired = desired_velocity(robotState, gp);
+
+                    // Compute control velocity
+                    std::vector<float> obstacle = rover2.getObstacle();
+                    std::vector<float> control_vel = compute_velocity(robotState, obstacle, v_desired);
+
+                    // Update robot state
+                    robotState = update_state(robotState, control_vel);
+                    rover2.updateState(robotState);
+                    std::cout << "Robot State  = ";
+                    rover2.printVector(robotState);
+                    // std::cout<<"Private : ";
+                    // rover2.printVector(rover2.getState());
+                    rover2.atGoal();
+                    rover2.display();
+                }
             }
-            bool readyMove = rover2.getReady();
-            if(readyMove){
-                std::vector<float> robotState = rover2.getState();
-                std::vector<float> gp = rover2.getTask();
-                std::vector<float> v_desired = desired_velocity(robotState, gp);
-
-                // Compute control velocity
-                std::vector<float> obstacle = rover2.getObstacle();
-                std::vector<float> control_vel = compute_velocity(robotState, obstacle, v_desired);
-
-                // Update robot state
-                robotState = update_state(robotState, control_vel);
-                rover2.updateState(robotState);
-                std::cout << "Robot State  = ";
-                rover2.printVector(robotState);
-                // std::cout<<"Private : ";
-                // rover2.printVector(rover2.getState());
-            }
-
         }
         else if (!cli.is_connected()) {
             std::cout << "Lost connection" << std::endl;
@@ -167,7 +173,7 @@ std::vector<float> desired_velocity(const std::vector<float> &current_pos, const
     std::vector<float> disp_vec = {goal_pos[0] - current_pos[0], goal_pos[1] - current_pos[1]};
     float norm = std::sqrt(disp_vec[0] * disp_vec[0] + disp_vec[1] * disp_vec[1]);
 
-    if (norm <= ROBOT_RADIUS / 13) {
+    if (norm <= 2) {
         return std::vector<float>{0.0, 0.0};
     }
 

@@ -36,12 +36,12 @@ void Rover::setTask(std::string &inputTask) {
     }
     else{
         std::cout << "Setting Rover Task..." << std::endl;
-        const Json::Value& spArray = task["sp"];
-        for (int i = 0; i < spArray.size(); ++i) {
-            // Update values of vector sp and JSON data Rover
-            sp[i] = spArray[i].asFloat();
-            // std::cout<<spArray[i]<<std::endl;
-        }
+        // const Json::Value& spArray = task["sp"];
+        // for (int i = 0; i < spArray.size(); ++i) {
+        //     // Update values of vector sp and JSON data Rover
+        //     sp[i] = spArray[i].asFloat();
+        //     // std::cout<<spArray[i]<<std::endl;
+        // }
         const Json::Value& gpArray = task["gp"];
         for (int i = 0; i < gpArray.size(); ++i) {
             // Update values of vector gp and JSON data Rover
@@ -70,7 +70,7 @@ void Rover::setObstacle(const std::string& inputObstacle) {
 
     else{
         const Json::Value& robotStateArray = dataObstacle["robot_state"];
-        for (int i = 0; i < robotStateArray.size()-1; ++i) {
+        for (int i = 0; i < robotStateArray.size(); ++i) {
             obstacle[i] = robotStateArray[i].asFloat();
         }
     }
@@ -109,7 +109,8 @@ void Rover::atGoal(){
     std::vector<float> disp_vec = {gp[0] - robotState[0], gp[1] - robotState[1]};
     float norm = std::sqrt(disp_vec[0] * disp_vec[0] + disp_vec[1] * disp_vec[1]);
     const float ROBOT_RADIUS = 11;
-    if (norm <= ROBOT_RADIUS / 11) {
+    if (norm <= 2) {
+        std::cout<<"\nRover Arrived at Goal!"<<std::endl;
         readyMove = false; 
     }
 }
@@ -127,8 +128,8 @@ void Rover::display(){
     std::cout << " Robot State  = ";
     printVector(robotState);
     std::cout << " Ready Move   = " <<readyMove << std::endl;
-    std::cout << " Start Point  = ";
-    printVector(sp);
+    // std::cout << " Start Point  = ";
+    // printVector(sp);
     std::cout << " Goal Point   = ";
     printVector(gp);
     std::cout << " obstacle     = ";
