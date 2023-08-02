@@ -6,7 +6,7 @@ find_package(jsoncpp REQUIRED)
 
 add_subdirectory(rover)
 
-add_executable(output test1.cpp)
+add_executable(output main.cpp)
 target_link_libraries(output
     rover  
     jsoncpp

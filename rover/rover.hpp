@@ -11,11 +11,6 @@ private:
     std::vector<float> obstacle;
     bool readyMove;
 
-    // //make JSON from string
-    // Json::CharReaderBuilder builder;
-    // Json::Value dataRover;
-    // Json::String errs;
-
 public:
     Rover(std::vector<float> &roverState, std::vector<float> &obstacle); 
 
@@ -34,9 +29,10 @@ public:
     bool getReady();
 
     std::string getJSONString();
-    
+
+    void atGoal();
+
     // Print Vector
-    // void printVector(std::vector<int> vec);
     void printVector(std::vector<float> vec);
 
 

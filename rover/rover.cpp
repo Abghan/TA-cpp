@@ -4,7 +4,7 @@
 #include "rover.hpp"
 
 // const float TIMESTEP = 0.1;
-// const float ROBOT_RADIUS = 10.7;
+// const float ROBOT_RADIUS = 11;
 // const int VMAX = 8; 
 
 Rover::Rover(std::vector<float> &robotState, std::vector<float> &obstacle){
@@ -105,13 +105,14 @@ std::string Rover::getJSONString() {
     return jsonString;
 }
 
-// Print Vector
-// void Rover::printVector(std::vector<int> vec){
-//         for (int i = 0; i < vec.size(); ++i) {
-//         std::cout << vec[i] << " ";
-//     }
-//     std::cout << std::endl;
-// }
+void Rover::atGoal(){
+    std::vector<float> disp_vec = {gp[0] - robotState[0], gp[1] - robotState[1]};
+    float norm = std::sqrt(disp_vec[0] * disp_vec[0] + disp_vec[1] * disp_vec[1]);
+    const float ROBOT_RADIUS = 11;
+    if (norm <= ROBOT_RADIUS / 11) {
+        readyMove = false; 
+    }
+}
 
 void Rover::printVector(std::vector<float> vec){
         for (int i = 0; i < vec.size(); ++i) {

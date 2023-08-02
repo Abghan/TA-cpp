@@ -12,7 +12,7 @@
 const std::string SERVER_ADDRESS	{ "localhost:1883" };
 const std::string CLIENT_ID		    { "Rover2" };
 const float TIMESTEP = 0.1;
-const float ROBOT_RADIUS = 10.7;
+const float ROBOT_RADIUS = 11;
 const int VMAX = 8; 
 
 void mqttInit(mqtt::client &cli);
@@ -49,8 +49,8 @@ int main(int argc, char const *argv[])
     mqttInit(cli);
 
     // Init Rover2
-    std::vector<float> robotState{40, 20, 0, 0};
-    std::vector<float> obstacle{40, 150, 0, 0};
+    std::vector<float> robotState{40.0, 20.0, 0.0, 0.0};
+    std::vector<float> obstacle{40.0, 150.0, 0.0, 0.0};
 
     Rover rover2 = Rover(robotState, obstacle);
 
@@ -122,12 +122,11 @@ void subMsg(mqtt::client &cli, Rover &rover2){
 
                 // Update robot state
                 robotState = update_state(robotState, control_vel);
+                rover2.updateState(robotState);
                 std::cout << "Robot State  = ";
                 rover2.printVector(robotState);
-                if(robotState[2]==0 && robotState[3]==0){
-                    std::cout << "Rover arrived at the goal" << std::endl;
-                    readyMove=0;
-                }
+                // std::cout<<"Private : ";
+                // rover2.printVector(rover2.getState());
             }
 
         }
@@ -351,7 +350,9 @@ std::vector<float> update_state(const std::vector<float> &xy, const std::vector<
     new_state[1] = xy[1] + v[1] * TIMESTEP;
     new_state[2] = v[0];
     new_state[3] = v[1];
-
-    // updateState(new_state);
     return new_state;
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> 3c82159 (fixed some bug)
